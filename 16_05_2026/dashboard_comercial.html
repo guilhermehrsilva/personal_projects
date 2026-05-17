@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Lead Scoring B2B — Painel de Vendas</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 font-sans p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <div class="bg-white p-6 rounded-2xl shadow-xs mb-8 border border-gray-100 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Lead Scoring B2B</h1>
+                <p class="text-sm text-gray-500">Simulador Comercial em Tempo Real integrado via API</p>
+            </div>
+            <div id="api-status" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                A verificar API...
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white p-6 rounded-2xl shadow-xs border border-gray-100 md:col-span-1">
+                <h2 class="text-lg font-bold text-gray-700 mb-4">Dados do Novo Lead</h2>
+                <form id="lead-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">Origem do Lead</label>
+                        <select id="origem" class="mt-1 block w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                            <option value="Inbound">Inbound (Site/Blog)</option>
+                            <option value="Outbound">Outbound (Prospecção)</option>
+                            <option value="Parceiros">Parceiros</option>
+                            <option value="Eventos">Eventos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">Porte da Empresa</label>
+                        <select id="porte_empresa" class="mt-1 block w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                            <option value="Pequena">Pequena</option>
+                            <option value="Média">Média</option>
+                            <option value="Grande">Grande</option>
+                            <option value="Enterprise">Enterprise</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">Interações (Últimos 7 dias)</label>
+                        <input type="number" id="engajamento_7d" value="3" class="mt-1 block w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">Interações (Últimos 14 dias)</label>
+                        <input type="number" id="engajamento_14d" value="5" class="mt-1 block w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">Interações (Últimos 30 dias)</label>
+                        <input type="number" id="engajamento_30d" value="8" class="mt-1 block w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">Total de Eventos no Histórico</label>
+                        <input type="number" id="total_eventos_historico" value="12" class="mt-1 block w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">Dias no Funil</label>
+                        <input type="number" id="dias_no_funil" value="25" class="mt-1 block w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                    </div>
+                    <button type="button" onclick="calcularScore()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl text-sm transition">
+                        Calcular Pontuação
+                    </button>
+                </form>
+            </div>
+
+            <div class="md:col-span-2 space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-xs border border-gray-100 flex flex-col items-center justify-center text-center">
+                        <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Probabilidade de Conversão</span>
+                        <span id="score-value" class="text-5xl font-extrabold text-indigo-600 mt-2">0.0%</span>
+                        <div id="tier-badge" class="mt-3 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">---</div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-xs border border-gray-100 flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Ação Comercial Recomendada</span>
+                            <p id="acao-value" class="text-base font-semibold text-gray-700 mt-3">Preencha os dados ao lado para obter a recomendação.</p>
+                        </div>
+                        <div id="roi-badge" class="mt-4 p-3 rounded-xl text-xs font-medium text-center bg-gray-50 text-gray-400">
+                            Aguardando análise...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-xs border border-gray-100">
+                    <h3 class="text-sm font-bold text-gray-700 mb-4">Aceleração Temporal do Engajamento (Tendência)</h3>
+                    <div class="h-48 relative">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chartInstance = null;
+
+        // Verificar saúde da API ao carregar a página
+        async function verificarAPI() {
+            try {
+                const response = await fetch('http://localhost:8080/');
+                if(response.ok) {
+                    const statusEl = document.getElementById('api-status');
+                    statusEl.innerText = "API Conectada";
+                    statusEl.className = "px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700";
+                }
+            } catch (e) {
+                const statusEl = document.getElementById('api-status');
+                statusEl.innerText = "API Offline (Porta 8080)";
+                statusEl.className = "px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700";
+            }
+        }
+        verificarAPI();
+
+        // Enviar os dados para a nossa API FastAPI
+        async function calcularScore() {
+            const payload = {
+                engajamento_7d: parseInt(document.getElementById('engajamento_7d').value),
+                engajamento_14d: parseInt(document.getElementById('engajamento_14d').value),
+                engajamento_30d: parseInt(document.getElementById('engajamento_30d').value),
+                total_eventos_historico: parseInt(document.getElementById('total_eventos_historico').value),
+                dias_no_funil: parseInt(document.getElementById('dias_no_funil').value),
+                origem: document.getElementById('origem').value,
+                porte_empresa: document.getElementById('porte_empresa').value
+            };
+
+            try {
+                const response = await fetch('http://localhost:8080/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if(!response.ok) throw new Error("Erro na predição");
+                const res = await response.json();
+
+                // Atualizar elementos visuais com o retorno do LightGBM
+                document.getElementById('score-value').innerText = (res.score_probabilidade * 100).toFixed(1) + '%';
+                
+                // Mapeamento de cores dos Tiers
+                const tierEl = document.getElementById('tier-badge');
+                tierEl.innerText = "Tier " + res.tier;
+                if(res.tier === 'Crítico') tierEl.className = "mt-3 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700";
+                else if(res.tier === 'Quente') tierEl.className = "mt-3 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700";
+                else if(res.tier === 'Morno') tierEl.className = "mt-3 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700";
+                else tierEl.className = "mt-3 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600";
+
+                document.getElementById('acao-value').innerText = res.acao_recomendada;
+
+                // Mensagem de ROI baseada no nosso Threshold Ótimo Financeiro
+                const roiEl = document.getElementById('roi-badge');
+                if(res.ultrapassou_threshold_roi) {
+                    roiEl.innerText = "✓ ROI Positivo: O retorno esperado justifica o acionamento comercial imediato.";
+                    roiEl.className = "mt-4 p-3 rounded-xl text-xs font-medium text-center bg-green-50 text-green-700 border border-green-100";
+                } else {
+                    roiEl.innerText = "✕ Bloqueado: Custo operacional supera a probabilidade de retorno.";
+                    roiEl.className = "mt-4 p-3 rounded-xl text-xs font-medium text-center bg-gray-50 text-gray-500 border border-gray-100";
+                }
+
+                // Desenhar gráfico de tendência do lead
+                atualizarGrafico(payload.engajamento_30d, payload.engajamento_14d, payload.engajamento_7d);
+
+            } catch (error) {
+                alert("Erro ao conectar com a API de scoring. Garanta que executou o arquivo api_scoring.py");
+            }
+        }
+
+        function atualizarGrafico(m30, m14, m7) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            if(chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Últimos 30 dias', 'Últimos 14 dias', 'Últimos 7 dias'],
+                    datasets: [{
+                        label: 'Volume de Interações',
+                        data: [m30, m14, m7],
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.05)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

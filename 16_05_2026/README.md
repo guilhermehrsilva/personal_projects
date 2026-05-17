@@ -1,93 +1,122 @@
-# Lead Scoring B2B com Machine Learning
+# 🚀 Lead Scoring B2B — Plataforma Comercial de MLOps
 
-Modelo preditivo para ranquear e priorizar leads B2B por probabilidade de conversão, com dashboard interativo para o time comercial.
+Esta plataforma é um ecossistema completo de **Machine Learning em Produção (MLOps)** projetado para identificar, priorizar e converter leads B2B de alto valor comercial. 
 
-## Problema de negócio
-
-Em vendas B2B, o time comercial tem energia limitada. Abordar todos os leads com a mesma prioridade desperdiça esforço e deixa oportunidades quentes esperando. Este projeto resolve isso com um modelo que **rankeia leads por probabilidade de conversão**, permitindo que o time foque nos 20% que geram 80% dos resultados.
-
-> **Resultado:** o modelo captura ~70% das conversões reais abordando apenas os top 30% dos leads ranqueados.
+O projeto evoluiu de uma simples análise exploratória num Jupyter Notebook para uma **arquitetura robusta de produção** com uma API em tempo real (FastAPI), contentorização (Docker), orquestração de retreino (Prefect) e um simulador comercial interativo (Tailwind CSS + Chart.js).
 
 ---
 
-## Estrutura do projeto
+## 📐 Arquitetura do Ecossistema
 
 ```
-.
-├── analise_b2b.ipynb   # Pipeline completo: dados → EDA → features → modelo → SHAP
-├── dashboard.ipynb     # Dashboard interativo para o time comercial (roda após analise_b2b)
-├── requirements.txt    # Dependências com versões fixadas
-└── README.md
+ ┌──────────────────────┐      ┌────────────────────────┐      ┌─────────────────────────┐
+ │  Data Warehouse (DW) │ ───> │  Prefect Pipeline      │ ───> │  LightGBM + Calibration │
+ │  (Dados Brutos B2B)  │      │  (Retreino Mensal)     │      │  (Ficheiros .pkl)       │
+ └──────────────────────┘      └────────────────────────┘      └─────────────────────────┘
+                                                                            │
+                                                                            ▼
+ ┌──────────────────────┐      ┌────────────────────────┐      ┌─────────────────────────┐
+ │ Dashboard Comercial  │ <─── │ FastAPI API            │ <─── │ joblib (Carregamento    │
+ │ (Tailwind/Chart.js)  │ (HTTP)│ (Docker Container)     │      │ em Memória Segura)      │
+ └──────────────────────┘      └────────────────────────┘      └─────────────────────────┘
 ```
 
 ---
 
-## Técnicas utilizadas
+## 📂 Estrutura de Ficheiros do Projeto
 
-| Etapa | Técnica |
-|---|---|
-| Geração de dados | Dataset sintético com estrutura de funil B2B real |
-| Feature engineering | Engajamento por dia, lead quente, ticket por porte, venda complexa |
-| Modelagem | `GradientBoostingClassifier` dentro de `sklearn.Pipeline` |
-| Calibração | `CalibratedClassifierCV` isotônico — probabilidades confiáveis para regras de negócio |
-| Avaliação | ROC-AUC + Average Precision + Curva de Ganhos |
-| Interpretabilidade | SHAP values — explica cada predição individualmente |
-| Dashboard | HTML/JS com Chart.js renderizado via `IPython.display` |
+*   **`analise_b2b.ipynb`**: Notebook de Data Science. Contém a análise exploratória de dados (EDA), modelagem experimental com Calibração Isotónica, análise de ROI e interpretabilidade usando **SHAP values**.
+*   **`api_scoring.py`**: Servidor FastAPI de produção que expõe a rota `/predict`. Integra o modelo serializado com suporte a CORS para consumo standalone.
+*   **`pipeline_retreino.py`**: Pipeline automático e resiliente usando **Prefect** para extração, validação, retreino mensal do LightGBM e autorização de deploy (Champion vs Baseline).
+*   **`dashboard_comercial.html`**: Simulador de vendas interativo. Permite a simulação de leads com respostas imediatas da API (probabilidade, tier, ação comercial e ROI).
+*   **`DockerFile`**: Receita Docker para empacotar a API FastAPI de forma leve (`python:3.10-slim`) com suporte nativo a operações matemáticas de árvores (`libgomp1`).
+*   **`requirements.txt`**: Dependências Python do projeto com as versões mapeadas e fixadas.
 
 ---
 
-## Como executar
+## 🧠 Lógica Comercial: O Threshold Ótimo de ROI (~2.9%)
+
+Ao contrário dos modelos acadêmicos que usam o ponto de corte padrão de `50%` de probabilidade, esta plataforma utiliza um **Threshold Ótimo de ROI (~2.9%)** calculado no notebook de negócios:
+*   **Porquê?** Em vendas B2B complexas, o custo de uma ligação telefónica/email é drasticamente inferior ao retorno financeiro de uma conversão de sucesso (LTV).
+*   **Ação:** Qualquer lead com probabilidade de conversão igual ou superior a **~2.9%** já justifica o acionamento da equipa comercial, gerando lucro líquido positivo (ROI Positivo). Leads abaixo deste threshold são mantidos em fluxos de nutrição automática (Bloqueados para o comercial).
+
+---
+
+## 🛠️ Como Executar o Projeto (Guia Passo a Passo)
+
+### 1. Preparação do Ambiente Local
+Crie o seu ambiente virtual e instale todas as dependências:
+```bash
+# Criar o ambiente virtual
+python -m venv .venv
+
+# Ativar o ambiente (Windows)
+.venv\Scripts\activate
+
+# Instalar dependências completas
+pip install -r requirements.txt
+```
+
+---
+
+### 2. Rodar a API FastAPI (Duas Opções)
+
+#### Opção A: Utilizando Docker (Produção)
+Esta opção encapsula toda a aplicação numa imagem isolada de alto rendimento.
+```bash
+# 1. Construir a imagem Docker
+docker build -t api-lead-scoring -f DockerFile .
+
+# 2. Executar a API na porta 8080
+docker run -p 8080:8080 api-lead-scoring
+```
+
+#### Opção B: Diretamente na Máquina Local (Desenvolvimento Rápido)
+Use esta opção se preferir evitar o Docker localmente ou estiver com bloqueios de firewall.
+```bash
+.venv\Scripts\python api_scoring.py
+```
+
+*A API estará ativa em `http://localhost:8080/` e responderá na rota `/predict`.*
+
+---
+
+### 3. Executar o Simulador Comercial (Dashboard)
+Visto que os navegadores modernos bloqueiam conexões AJAX (`fetch`) a partir do protocolo de ficheiro local `file:///`, servimos o dashboard de forma limpa:
 
 ```bash
-# 1. Clone o repositório
-git clone https://github.com/<seu-usuario>/lead-scoring-b2b.git
-cd lead-scoring-b2b
-
-# 2. Crie um ambiente virtual e instale as dependências
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-
-# 3. Abra o Jupyter e execute os notebooks em ordem
-jupyter notebook
+# Inicie um servidor HTTP local simples usando o Python na pasta do projeto
+.venv\Scripts\python -m http.server 8000
 ```
 
-Execute `analise_b2b.ipynb` primeiro (todas as células), depois `dashboard.ipynb`. O dashboard usa `%run analise_b2b.ipynb` internamente para carregar o modelo já treinado.
+Agora, abra o seu browser favorito e aceda a:
+👉 **[http://localhost:8000/dashboard_comercial.html](http://localhost:8000/dashboard_comercial.html)**
 
 ---
 
-## Métricas do modelo
-
-| Métrica | Valor |
-|---|---|
-| ROC-AUC | ~0.85 |
-| Average Precision | ~0.76 |
-| Conversões capturadas no top 30% | ~70% |
-
-> Métricas variam levemente por dependerem de geração aleatória com seed fixo.
+### 4. Executar o Pipeline de Retreino (Prefect)
+Para simular um retreino mensal do modelo com validação automatizada de performance, execute:
+```bash
+.venv\Scripts\python pipeline_retreino.py
+```
+O Prefect gerará logs detalhados e assegurará a estabilidade do fluxo de dados antes de autorizar o deploy.
 
 ---
 
-## Por que ROC-AUC e não acurácia?
+## 📊 Segmentação Comercial (Tiers de Leads)
 
-Em lead scoring o objetivo é **rankear**, não classificar. Com taxa de conversão de ~23%, um modelo que chuta "não converte" para todos teria acurácia de 77% — e seria inútil. ROC-AUC mede se leads bons aparecem consistentemente acima dos ruins no ranking, que é exatamente o que importa para o comercial.
+A plataforma segmenta automaticamente cada predição em quatro categorias táticas:
 
----
-
-## Segmentação de leads (tiers)
-
-| Tier | Score | Ação recomendada |
-|---|---|---|
-| Crítico | > 0.80 | Ligar hoje |
-| Quente | 0.60 – 0.80 | Agendar reunião esta semana |
-| Morno | 0.30 – 0.60 | Nutrir com conteúdo + follow-up em 15 dias |
-| Frio | < 0.30 | Manter em automação de marketing |
+| Tier | Limiar de Score | Ação Comercial Recomendada |
+| :--- | :--- | :--- |
+| 🔴 **Crítico** | `>= 80%` | Ligar HOJE — alto potencial de fecho imediato. |
+| 🟡 **Quente** | `60% - 79%` | Agendar reunião comercial ainda esta semana. |
+| 🔵 **Morno** | `30% - 59%` | Nutrir com conteúdo focado + follow-up em 15 dias. |
+| ⚪ **Frio** | `< 30%` | Manter 100% sob automação de marketing digital. |
 
 ---
 
-## Próximos passos
-
-- Conectar à API do CRM (HubSpot / Salesforce / Pipedrive) para dados reais
-- Adicionar features temporais: janelas de engajamento dos últimos 7, 14 e 30 dias
-- Modelo de sobrevivência para prever *quando* o lead converte, não só *se*
-- Deploy via FastAPI com endpoint consumido em tempo real pelo CRM
+## 🔍 Revisões de Segurança e Resiliência Aplicadas
+*   **Segurança de CORS:** A API foi configurada com `allow_credentials=False` permitindo o wildcard `allow_origins=["*"]`. Isto impede o bloqueio de requisições por parte de navegadores modernos.
+*   **Compilação de Sistema:** O Dockerfile foi atualizado para instalar `libgomp1` de forma a garantir que o LightGBM realize a álgebra linear dentro do Linux de forma estável.
+*   **Resolução de Nomes Local:** Dashboard alterado para realizar chamadas no domínio `localhost` em vez de IPs estáticos para total conformidade de resolução IPv4/IPv6 no Windows.
