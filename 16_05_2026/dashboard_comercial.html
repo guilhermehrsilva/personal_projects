@@ -1,123 +1,587 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Lead Scoring B2B — Painel de Vendas</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2B Lead Scoring — Executive MLOps Dashboard</title>
+    <meta name="description" content="Painel executivo comercial e simulador de lead scoring B2B em tempo real, integrado com modelo LightGBM calibrado.">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="dashboard_comercial.css">
+    <!-- FontAwesome for Professional Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-50 font-sans p-8">
+<body>
 
-    <div class="max-w-5xl mx-auto">
-        <div class="bg-white p-6 rounded-2xl shadow-xs mb-8 border border-gray-100 flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">Lead Scoring B2B</h1>
-                <p class="text-sm text-gray-500">Simulador Comercial em Tempo Real integrado via API</p>
-            </div>
-            <div id="api-status" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
-                A verificar API...
-            </div>
-        </div>
+    <!-- Ambient Glowing Spots -->
+    <div class="ambient-glow-1"></div>
+    <div class="ambient-glow-2"></div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="bg-white p-6 rounded-2xl shadow-xs border border-gray-100 md:col-span-1">
-                <h2 class="text-lg font-bold text-gray-700 mb-4">Dados do Novo Lead</h2>
-                <form id="lead-form" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 uppercase">Origem do Lead</label>
-                        <select id="origem" class="mt-1 block w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm">
-                            <option value="Inbound">Inbound (Site/Blog)</option>
-                            <option value="Outbound">Outbound (Prospecção)</option>
-                            <option value="Parceiros">Parceiros</option>
-                            <option value="Eventos">Eventos</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 uppercase">Porte da Empresa</label>
-                        <select id="porte_empresa" class="mt-1 block w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm">
-                            <option value="Pequena">Pequena</option>
-                            <option value="Média">Média</option>
-                            <option value="Grande">Grande</option>
-                            <option value="Enterprise">Enterprise</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 uppercase">Interações (Últimos 7 dias)</label>
-                        <input type="number" id="engajamento_7d" value="3" class="mt-1 block w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 uppercase">Interações (Últimos 14 dias)</label>
-                        <input type="number" id="engajamento_14d" value="5" class="mt-1 block w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 uppercase">Interações (Últimos 30 dias)</label>
-                        <input type="number" id="engajamento_30d" value="8" class="mt-1 block w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 uppercase">Total de Eventos no Histórico</label>
-                        <input type="number" id="total_eventos_historico" value="12" class="mt-1 block w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 uppercase">Dias no Funil</label>
-                        <input type="number" id="dias_no_funil" value="25" class="mt-1 block w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
-                    </div>
-                    <button type="button" onclick="calcularScore()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl text-sm transition">
-                        Calcular Pontuação
-                    </button>
-                </form>
-            </div>
-
-            <div class="md:col-span-2 space-y-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-xs border border-gray-100 flex flex-col items-center justify-center text-center">
-                        <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Probabilidade de Conversão</span>
-                        <span id="score-value" class="text-5xl font-extrabold text-indigo-600 mt-2">0.0%</span>
-                        <div id="tier-badge" class="mt-3 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">---</div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-2xl shadow-xs border border-gray-100 flex flex-col justify-between">
-                        <div>
-                            <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Ação Comercial Recomendada</span>
-                            <p id="acao-value" class="text-base font-semibold text-gray-700 mt-3">Preencha os dados ao lado para obter a recomendação.</p>
+    <!-- Main Container Mockup -->
+    <div class="app-container">
+        <div class="app-layout">
+            
+            <!-- SIDEBAR -->
+            <aside class="sidebar">
+                <div>
+                    <div class="sidebar-brand">
+                        <div class="sidebar-logo">
+                            <i class="fa-solid fa-circle-nodes"></i>
                         </div>
-                        <div id="roi-badge" class="mt-4 p-3 rounded-xl text-xs font-medium text-center bg-gray-50 text-gray-400">
-                            Aguardando análise...
-                        </div>
+                        <span class="sidebar-title">Lead Scoring B2B</span>
+                        <button class="collapse-toggle" onclick="toggleSidebar()" id="btn-collapse-sidebar" title="Recolher Barra Lateral">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                    </div>
+                    
+                    <ul class="sidebar-menu">
+                        <li class="menu-item active" id="menu-dashboard">
+                            <button onclick="switchTab('dashboard')" id="btn-tab-dashboard">
+                                <i class="fa-solid fa-table-columns"></i> <span>Dashboard</span>
+                            </button>
+                        </li>
+                        <li class="menu-item" id="menu-historico">
+                            <button onclick="switchTab('historico')" id="btn-tab-historico">
+                                <i class="fa-solid fa-users"></i> <span>Lead Pool</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="sidebar-footer">
+                    <div class="api-indicator">
+                        <div class="status-dot disconnected" id="api-status-dot"></div>
+                        <span id="api-status-text">API Offline</span>
                     </div>
                 </div>
+            </aside>
 
-                <div class="bg-white p-6 rounded-2xl shadow-xs border border-gray-100">
-                    <h3 class="text-sm font-bold text-gray-700 mb-4">Aceleração Temporal do Engajamento (Tendência)</h3>
-                    <div class="h-48 relative">
-                        <canvas id="trendChart"></canvas>
+            <!-- CONTEÚDO PRINCIPAL -->
+            <div class="main-area">
+                
+                <!-- HEADER -->
+                <header class="main-header">
+                    <div class="header-title">
+                        <h1 id="main-panel-title">B2B Lead Scoring Dashboard</h1>
                     </div>
+                    <div class="header-actions">
+                        <i class="fa-regular fa-bell header-icon" id="icon-notification"></i>
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80" alt="Avatar Usuário" class="avatar-img" id="user-profile-avatar">
+                        <i class="fa-solid fa-gear header-icon" id="icon-settings" onclick="showToast('Definições do painel em desenvolvimento.')"></i>
+                        <i class="fa-solid fa-right-from-bracket header-icon" id="icon-logout" onclick="showToast('Sessão mantida localmente.')"></i>
+                    </div>
+                </header>
+
+                <!-- ABA 1: DASHBOARD PRINCIPAL -->
+                <section id="tab-dashboard" class="tab-content active">
+                    <div class="dashboard-grid">
+                        
+                        <!-- Coluna Esquerda (4 Cards Estáticos) -->
+                        <div class="left-column">
+                            <!-- Card 1: Conversion Rate -->
+                            <div class="card" id="card-conversion-rate">
+                                <div class="card-header">
+                                    <span class="card-title">Conversion Rate</span>
+                                    <i class="fa-solid fa-arrow-trend-up card-icon-arrow"></i>
+                                </div>
+                                <div class="card-value">24.8%</div>
+                                <div class="mini-chart-container">
+                                    <canvas id="chart-conversion-rate"></canvas>
+                                </div>
+                                <div class="card-subtext">
+                                    <span>0%</span>
+                                    <span>10%</span>
+                                    <span>30%</span>
+                                    <span>Anv</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Card 2: High ROI -->
+                            <div class="card" id="card-high-roi">
+                                <div class="card-header">
+                                    <span class="card-title">High ROI</span>
+                                    <i class="fa-solid fa-ellipsis-vertical" style="color: var(--text-muted); cursor: pointer;"></i>
+                                </div>
+                                <div class="card-value">2.1x</div>
+                                <div class="mini-chart-container">
+                                    <canvas id="chart-high-roi"></canvas>
+                                </div>
+                                <div class="card-subtext">
+                                    <span>Profit</span>
+                                    <span>Profit</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Card 3: Revenue Growth -->
+                            <div class="card" id="card-revenue-growth-left">
+                                <div class="card-header">
+                                    <span class="card-title">Revenue Growth</span>
+                                    <i class="fa-solid fa-arrow-trend-up card-icon-arrow"></i>
+                                </div>
+                                <div class="card-value">+15%</div>
+                                <div class="mini-chart-container">
+                                    <canvas id="chart-rev-growth-left"></canvas>
+                                </div>
+                                <div class="card-subtext">
+                                    <span>YoY</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Card 4: Total Qualified Leads -->
+                            <div class="card total-leads-card" id="card-qualified-leads">
+                                <div class="card-header">
+                                    <span class="card-title">Total Qualified Leads</span>
+                                    <i class="fa-solid fa-chevron-right" style="color: var(--text-muted);"></i>
+                                </div>
+                                <div class="card-value">4,152</div>
+                                <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">leads</span>
+                            </div>
+                        </div>
+
+                        <!-- Coluna Central (Gauge Gigante + Gráfico de Tendência) -->
+                        <div class="center-column">
+                            <!-- Card Gauge circular -->
+                            <div class="card gauge-card" id="card-lead-performance">
+                                <span class="gauge-card-title">Lead Score Performance</span>
+                                <i class="fa-solid fa-ellipsis-vertical gauge-card-options"></i>
+                                
+                                <div class="gauge-wrapper">
+                                    <div class="gauge-svg-wrapper">
+                                        <svg viewBox="0 0 100 100">
+                                            <!-- Gradiente do preenchimento -->
+                                            <defs>
+                                                <linearGradient id="gauge-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                    <stop offset="0%" stop-color="#00f2fe" />
+                                                    <stop offset="100%" stop-color="#4facfe" />
+                                                </linearGradient>
+                                            </defs>
+                                            <!-- Anel de Background -->
+                                            <circle class="gauge-bg-ring" cx="50" cy="50" r="40" stroke="rgba(255, 255, 255, 0.04)" stroke-width="7" fill="none" stroke-dasharray="188.4 251.2" />
+                                            <!-- Anel de Progresso -->
+                                            <circle class="gauge-fill-ring" id="score-gauge" cx="50" cy="50" r="40" stroke="url(#gauge-grad)" stroke-width="7" fill="none" stroke-dasharray="188.4 251.2" stroke-dashoffset="23.55" />
+                                        </svg>
+                                    </div>
+                                    
+                                    <div class="gauge-inner-content">
+                                        <span class="gauge-number" id="gauge-score-value">87.5%</span>
+                                        <span class="gauge-sub">Score</span>
+                                    </div>
+                                    
+                                    <div class="gauge-limits">
+                                        <span>0%</span>
+                                        <span>100%</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Floating Red Capsule -->
+                                <div class="tier-capsule" id="tier-floating-capsule" onclick="toggleDrawer(true)">
+                                    <div class="tier-capsule-icon">
+                                        <i class="fa-solid fa-chart-simple"></i>
+                                    </div>
+                                    <span id="tier-floating-text">Tier Crítico</span>
+                                </div>
+                            </div>
+
+                            <!-- Card Gráfico Bottom: Conversion Trends -->
+                            <div class="card trends-card" id="card-conversion-trends">
+                                <div class="trends-header">
+                                    <span class="trends-title">Conversion Trends</span>
+                                    <div class="trends-legend">
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background-color: var(--accent-purple);"></div>
+                                            <span>Leads</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background-color: var(--accent-cyan);"></div>
+                                            <span>Conversions</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="trends-chart-wrapper">
+                                    <canvas id="conversionTrendsChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna Direita (2 Cards) -->
+                        <div class="right-column">
+                            <!-- Card 1: Revenue Growth Right -->
+                            <div class="card" id="card-revenue-growth-right">
+                                <div class="card-header">
+                                    <span class="card-title">Revenue Growth</span>
+                                    <i class="fa-solid fa-arrow-trend-up card-icon-arrow"></i>
+                                </div>
+                                <div class="card-value">+15%</div>
+                                <div class="mini-chart-container">
+                                    <canvas id="chart-rev-growth-right"></canvas>
+                                </div>
+                                <div class="card-subtext">
+                                    <span>10%</span>
+                                    <span>20%</span>
+                                    <span>30Y</span>
+                                    <span>YoY</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Card 2: Interactive Action trigger -->
+                            <div class="card lead-score-action-card" id="card-lead-simulator-trigger" onclick="toggleDrawer(true)">
+                                <div class="card-header">
+                                    <span class="card-title">Lead Score</span>
+                                    <i class="fa-solid fa-chevron-right" style="color: var(--accent-cyan);"></i>
+                                </div>
+                                <div class="lead-score-action-content">
+                                    <span class="lead-score-action-text">Simular Lead</span>
+                                    <i class="fa-solid fa-angles-right lead-score-action-icon"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- ABA 2: BANCO DE LEADS / HISTÓRICO -->
+                <section id="tab-historico" class="tab-content">
+                    <div class="history-card">
+                        <div class="card-title" style="font-size: 1rem; margin-bottom: 1.5rem;"><i class="fa-solid fa-database"></i> Banco de Leads Simulados</div>
+                        
+                        <div class="history-controls">
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="search-input" placeholder="Filtrar por ID, origem ou porte..." oninput="filterHistoryTable()">
+                            </div>
+                            
+                            <div class="filter-group">
+                                <select id="filter-tier" class="select-filter" onchange="filterHistoryTable()">
+                                    <option value="ALL">Todos os Tiers</option>
+                                    <option value="Crítico">Tier Crítico</option>
+                                    <option value="Quente">Tier Quente</option>
+                                    <option value="Morno">Tier Morno</option>
+                                    <option value="Frio">Tier Frio</option>
+                                </select>
+                                
+                                <button onclick="exportHistory('csv')" class="btn-secondary" id="btn-export-csv">
+                                    <i class="fa-solid fa-file-csv"></i> CSV
+                                </button>
+                                <button onclick="exportHistory('json')" class="btn-secondary" id="btn-export-json">
+                                    <i class="fa-solid fa-file-code"></i> JSON
+                                </button>
+                                <button onclick="clearHistory()" class="btn-secondary" id="btn-clear-history" style="color: var(--accent-red); border-color: rgba(255, 23, 68, 0.2)">
+                                    <i class="fa-solid fa-trash-can"></i> Limpar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="history-table" id="leads-table">
+                                <thead>
+                                    <tr>
+                                        <th style="cursor: pointer;" onclick="sortTable(0)">ID <i class="fa-solid fa-sort"></i></th>
+                                        <th style="cursor: pointer;" onclick="sortTable(1)">Origem <i class="fa-solid fa-sort"></i></th>
+                                        <th style="cursor: pointer;" onclick="sortTable(2)">Porte <i class="fa-solid fa-sort"></i></th>
+                                        <th>Engajamento (7d/14d/30d)</th>
+                                        <th style="cursor: pointer;" onclick="sortTable(4)">Funil <i class="fa-solid fa-sort"></i></th>
+                                        <th style="cursor: pointer;" onclick="sortTable(5)">Score <i class="fa-solid fa-sort"></i></th>
+                                        <th style="cursor: pointer;" onclick="sortTable(6)">Tier <i class="fa-solid fa-sort"></i></th>
+                                        <th>ROI</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leads-table-body">
+                                    <!-- Dinâmico -->
+                                </tbody>
+                            </table>
+                            <div id="table-empty-state" class="table-empty">
+                                <i class="fa-solid fa-folder-open"></i>
+                                <p>Nenhuma simulação registrada na sessão ainda.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- DRAWER OVERLAY -->
+    <div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer(false)"></div>
+
+    <!-- SIMULATOR DRAWER (Painel Lateral de Simulação) -->
+    <div class="drawer" id="simulator-drawer">
+        <div class="drawer-header">
+            <h3><i class="fa-solid fa-sliders"></i> Simulador Lead B2B</h3>
+            <button onclick="toggleDrawer(false)" class="close-btn" id="btn-close-drawer">&times;</button>
+        </div>
+        
+        <div class="drawer-content">
+            <form id="lead-form" onsubmit="event.preventDefault();">
+                <div class="form-group">
+                    <label class="form-label">Origem do Lead</label>
+                    <select id="origem" class="form-select">
+                        <option value="Inbound">Inbound (Site/Blog/Materiais)</option>
+                        <option value="Outbound">Outbound (Prospecção Ativa)</option>
+                        <option value="Parceiros">Parceiros de Negócio</option>
+                        <option value="Eventos">Eventos e Webinars</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Porte da Empresa</label>
+                    <select id="porte_empresa" class="form-select">
+                        <option value="Pequena">Pequena Empresa (PME)</option>
+                        <option value="Média">Média Empresa</option>
+                        <option value="Grande">Grande Empresa</option>
+                        <option value="Enterprise">Enterprise / Multinacional</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Dias no Funil (Sales Cycle)</label>
+                    <div class="slider-container">
+                        <input type="range" id="dias_no_funil" min="1" max="180" value="25" class="slider-input" oninput="updateSliderVal(this)">
+                        <span class="slider-value" id="val-dias_no_funil">25</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Eventos últimos 7 dias</label>
+                    <div class="slider-container">
+                        <input type="range" id="engajamento_7d" min="0" max="20" value="3" class="slider-input" oninput="updateSliderVal(this)">
+                        <span class="slider-value" id="val-engajamento_7d">3</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Eventos últimos 14 dias</label>
+                    <div class="slider-container">
+                        <input type="range" id="engajamento_14d" min="0" max="40" value="5" class="slider-input" oninput="updateSliderVal(this)">
+                        <span class="slider-value" id="val-engajamento_14d">5</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Eventos últimos 30 dias</label>
+                    <div class="slider-container">
+                        <input type="range" id="engajamento_30d" min="0" max="60" value="8" class="slider-input" oninput="updateSliderVal(this)">
+                        <span class="slider-value" id="val-engajamento_30d">8</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Total Eventos Histórico</label>
+                    <div class="slider-container">
+                        <input type="range" id="total_eventos_historico" min="1" max="100" value="12" class="slider-input" oninput="updateSliderVal(this)">
+                        <span class="slider-value" id="val-total_eventos_historico">12</span>
+                    </div>
+                </div>
+                
+                <button type="button" onclick="calcularScore()" class="btn-primary" id="btn-submit-simulation">
+                    <i class="fa-solid fa-bolt-lightning"></i> Calcular Pontuação
+                </button>
+            </form>
+            
+            <!-- ROI Panel inside Drawer -->
+            <div class="roi-drawer-panel">
+                <div class="roi-status-line" id="roi-status">
+                    <i class="fa-solid fa-circle-check" style="color: var(--accent-emerald);"></i>
+                    <span style="color: var(--accent-emerald);">ROI Positivo: Liberado p/ Comercial</span>
+                </div>
+                
+                <div class="roi-bar-wrapper">
+                    <div class="roi-bar-labels">
+                        <span>0%</span>
+                        <span>10%+</span>
+                    </div>
+                    <div class="roi-bar">
+                        <div class="roi-bar-fill" id="roi-progress" style="width: 100%;"></div>
+                        <div class="roi-threshold-marker"></div>
+                        <div class="roi-indicator-node" id="roi-node" style="left: 100%;"></div>
+                    </div>
+                </div>
+                
+                <div class="roi-breakdown">
+                    <span>Retorno: <strong id="roi-return">R$ 4.375,00</strong></span>
+                    <span>Custo: <strong id="roi-cost">R$ 50</strong></span>
+                    <span>Lucro: <strong id="roi-profit" style="color: var(--accent-emerald);">R$ 4.325,00</strong></span>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        let chartInstance = null;
+    <!-- TOAST NOTIFICATIONS -->
+    <div class="toast-container" id="toast-wrapper"></div>
 
-        // Verificar saúde da API ao carregar a página
-        async function verificarAPI() {
-            try {
-                const response = await fetch('http://localhost:8080/');
-                if(response.ok) {
-                    const statusEl = document.getElementById('api-status');
-                    statusEl.innerText = "API Conectada";
-                    statusEl.className = "px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700";
+    <!-- JS LOGIC -->
+    <script>
+        // Geral
+        let trendChartInstance = null;
+        let miniCharts = {};
+        let leadsHistory = [];
+        let sortDirection = {};
+        
+        const TICKET_MEDIO = 5000;
+        const CUSTO_LIGACAO = 50;
+        const API_URL = 'http://localhost:8080';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Verificar se a sidebar deve estar recolhida por padrão
+            const isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+            if (isCollapsed) {
+                document.querySelector('.app-layout').classList.add('collapsed');
+                document.getElementById('btn-collapse-sidebar').querySelector('i').className = 'fa-solid fa-chevron-right';
+            }
+
+            // Inicializa gráficos
+            initMiniCharts();
+            initTrendsChart();
+            
+            // Verificar conexão
+            checkAPIStatus();
+            setInterval(checkAPIStatus, 8000);
+            
+            // Histórico local
+            const savedHistory = localStorage.getItem('lead_scoring_session_history');
+            if (savedHistory) {
+                leadsHistory = JSON.parse(savedHistory);
+                renderHistoryTable();
+            }
+        });
+
+        // Função de Recolher Sidebar
+        function toggleSidebar() {
+            const layout = document.querySelector('.app-layout');
+            const btn = document.getElementById('btn-collapse-sidebar');
+            const icon = btn.querySelector('i');
+            
+            layout.classList.toggle('collapsed');
+            
+            if (layout.classList.contains('collapsed')) {
+                icon.className = 'fa-solid fa-chevron-right';
+                localStorage.setItem('sidebar_collapsed', 'true');
+            } else {
+                icon.className = 'fa-solid fa-chevron-left';
+                localStorage.setItem('sidebar_collapsed', 'false');
+            }
+            
+            // Redesenhar os gráficos após a transição da sidebar terminar (300ms)
+            setTimeout(() => {
+                if (window.Chart) {
+                    for (let id in Chart.instances) {
+                        Chart.instances[id].resize();
+                    }
                 }
-            } catch (e) {
-                const statusEl = document.getElementById('api-status');
-                statusEl.innerText = "API Offline (Porta 8080)";
-                statusEl.className = "px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700";
+            }, 320);
+        }
+
+        // Alternar abas
+        function switchTab(tabId) {
+            document.querySelectorAll('.sidebar-menu .menu-item').forEach(item => item.classList.remove('active'));
+            document.getElementById('menu-' + tabId).classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        // Toggle do Drawer
+        function toggleDrawer(open) {
+            const drawer = document.getElementById('simulator-drawer');
+            const overlay = document.getElementById('drawer-overlay');
+            if (open) {
+                drawer.classList.add('open');
+                overlay.classList.add('open');
+            } else {
+                drawer.classList.remove('open');
+                overlay.classList.remove('open');
             }
         }
-        verificarAPI();
 
-        // Enviar os dados para a nossa API FastAPI
+        // Atualizar labels dos sliders
+        function updateSliderVal(slider) {
+            document.getElementById('val-' + slider.id).innerText = slider.value;
+            
+            // Validações cruzadas
+            if (slider.id === 'engajamento_7d') {
+                const e14 = document.getElementById('engajamento_14d');
+                if (parseInt(slider.value) > parseInt(e14.value)) {
+                    e14.value = slider.value;
+                    document.getElementById('val-engajamento_14d').innerText = slider.value;
+                }
+                const e30 = document.getElementById('engajamento_30d');
+                if (parseInt(slider.value) > parseInt(e30.value)) {
+                    e30.value = slider.value;
+                    document.getElementById('val-engajamento_30d').innerText = slider.value;
+                }
+            } else if (slider.id === 'engajamento_14d') {
+                const e7 = document.getElementById('engajamento_7d');
+                if (parseInt(slider.value) < parseInt(e7.value)) {
+                    e7.value = slider.value;
+                    document.getElementById('val-engajamento_7d').innerText = slider.value;
+                }
+                const e30 = document.getElementById('engajamento_30d');
+                if (parseInt(slider.value) > parseInt(e30.value)) {
+                    e30.value = slider.value;
+                    document.getElementById('val-engajamento_30d').innerText = slider.value;
+                }
+            } else if (slider.id === 'engajamento_30d') {
+                const e14 = document.getElementById('engajamento_14d');
+                if (parseInt(slider.value) < parseInt(e14.value)) {
+                    e14.value = slider.value;
+                    document.getElementById('val-engajamento_14d').innerText = slider.value;
+                }
+                const e7 = document.getElementById('engajamento_7d');
+                if (parseInt(slider.value) < parseInt(e7.value)) {
+                    e7.value = slider.value;
+                    document.getElementById('val-engajamento_7d').innerText = slider.value;
+                }
+            }
+            
+            const e30Val = parseInt(document.getElementById('engajamento_30d').value);
+            const totalEvents = document.getElementById('total_eventos_historico');
+            if (parseInt(totalEvents.value) < e30Val) {
+                totalEvents.value = e30Val;
+                document.getElementById('val-total_eventos_historico').innerText = e30Val;
+            }
+        }
+
+        // Verificação status API
+        async function checkAPIStatus() {
+            const statusDot = document.getElementById('api-status-dot');
+            const statusText = document.getElementById('api-status-text');
+            try {
+                const res = await fetch(API_URL + '/', { signal: AbortSignal.timeout(3000) });
+                if (res.ok) {
+                    statusDot.className = "status-dot connected";
+                    statusText.innerText = "API Online (8080)";
+                    return true;
+                }
+            } catch (e) {}
+            statusDot.className = "status-dot disconnected";
+            statusText.innerText = "API Offline";
+            return false;
+        }
+
+        // Toasts
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-wrapper');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation';
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'fadeIn 0.3s reverse forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Enviar predição
         async function calcularScore() {
+            const isOnline = await checkAPIStatus();
+            if (!isOnline) {
+                showToast("Erro: A API de Scoring na porta 8080 está desconectada.", "error");
+                return;
+            }
+
             const payload = {
                 engajamento_7d: parseInt(document.getElementById('engajamento_7d').value),
                 engajamento_14d: parseInt(document.getElementById('engajamento_14d').value),
@@ -129,71 +593,413 @@
             };
 
             try {
-                const response = await fetch('http://localhost:8080/predict', {
+                const response = await fetch(API_URL + '/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                if(!response.ok) throw new Error("Erro na predição");
-                const res = await response.json();
+                if (!response.ok) throw new Error();
+                const data = await response.json();
 
-                // Atualizar elementos visuais com o retorno do LightGBM
-                document.getElementById('score-value').innerText = (res.score_probabilidade * 100).toFixed(1) + '%';
+                updateGauge(data.score_probabilidade);
+                updateFloatingBadge(data.tier);
+                updateRoiPanel(data.score_probabilidade, data.ultrapassou_threshold_roi);
                 
-                // Mapeamento de cores dos Tiers
-                const tierEl = document.getElementById('tier-badge');
-                tierEl.innerText = "Tier " + res.tier;
-                if(res.tier === 'Crítico') tierEl.className = "mt-3 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700";
-                else if(res.tier === 'Quente') tierEl.className = "mt-3 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700";
-                else if(res.tier === 'Morno') tierEl.className = "mt-3 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700";
-                else tierEl.className = "mt-3 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600";
+                saveLeadToHistory(payload, data);
+                showToast("Lead B2B analisado e dashboard atualizado!");
+                toggleDrawer(false); // Fecha o painel lateral automaticamente
 
-                document.getElementById('acao-value').innerText = res.acao_recomendada;
-
-                // Mensagem de ROI baseada no nosso Threshold Ótimo Financeiro
-                const roiEl = document.getElementById('roi-badge');
-                if(res.ultrapassou_threshold_roi) {
-                    roiEl.innerText = "✓ ROI Positivo: O retorno esperado justifica o acionamento comercial imediato.";
-                    roiEl.className = "mt-4 p-3 rounded-xl text-xs font-medium text-center bg-green-50 text-green-700 border border-green-100";
-                } else {
-                    roiEl.innerText = "✕ Bloqueado: Custo operacional supera a probabilidade de retorno.";
-                    roiEl.className = "mt-4 p-3 rounded-xl text-xs font-medium text-center bg-gray-50 text-gray-500 border border-gray-100";
-                }
-
-                // Desenhar gráfico de tendência do lead
-                atualizarGrafico(payload.engajamento_30d, payload.engajamento_14d, payload.engajamento_7d);
-
-            } catch (error) {
-                alert("Erro ao conectar com a API de scoring. Garanta que executou o arquivo api_scoring.py");
+            } catch (err) {
+                showToast("Erro na predição do modelo de Lead Scoring.", "error");
             }
         }
 
-        function atualizarGrafico(m30, m14, m7) {
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            if(chartInstance) chartInstance.destroy();
+        // Atualizar gauge radial (270 graus de sweep)
+        function updateGauge(score) {
+            const gauge = document.getElementById('score-gauge');
+            const numLabel = document.getElementById('gauge-score-value');
+            
+            // Circunferência de raio 40 é 251.2. Arco de 270 deg é 188.4
+            const maxArc = 188.4;
+            const offset = maxArc * (1 - score);
+            gauge.style.strokeDashoffset = offset;
+            
+            // Animando o número
+            let start = 0;
+            const target = score * 100;
+            const duration = 800;
+            const startTime = performance.now();
 
-            chartInstance = new Chart(ctx, {
+            function anim(t) {
+                const elapsed = t - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const val = progress * target;
+                numLabel.innerText = val.toFixed(1) + '%';
+                if (progress < 1) requestAnimationFrame(anim);
+                else numLabel.innerText = target.toFixed(1) + '%';
+            }
+            requestAnimationFrame(anim);
+        }
+
+        // Atualizar Floating Capsule
+        function updateFloatingBadge(tier) {
+            const capsule = document.getElementById('tier-floating-capsule');
+            const text = document.getElementById('tier-floating-text');
+            text.innerText = `Tier ${tier}`;
+            
+            capsule.style.background = '';
+            capsule.style.boxShadow = '';
+            
+            if (tier === 'Crítico') {
+                capsule.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(185, 28, 28, 0.9) 100%)';
+                capsule.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.35)';
+            } else if (tier === 'Quente') {
+                capsule.style.background = 'linear-gradient(135deg, rgba(245, 158, 11, 0.9) 0%, rgba(217, 119, 6) 100%)';
+                capsule.style.boxShadow = '0 4px 15px rgba(245, 158, 11, 0.35)';
+            } else if (tier === 'Morno') {
+                capsule.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(29, 78, 216, 0.9) 100%)';
+                capsule.style.boxShadow = '0 4px 15px rgba(59, 130, 246, 0.35)';
+            } else {
+                capsule.style.background = 'linear-gradient(135deg, rgba(107, 114, 128, 0.9) 0%, rgba(75, 85, 99, 0.9) 100%)';
+                capsule.style.boxShadow = '0 4px 15px rgba(107, 114, 128, 0.2)';
+            }
+        }
+
+        // Atualizar ROI no Drawer
+        function updateRoiPanel(score, status) {
+            const roiStatus = document.getElementById('roi-status');
+            const roiProgress = document.getElementById('roi-progress');
+            const roiNode = document.getElementById('roi-node');
+            const roiReturn = document.getElementById('roi-return');
+            const roiProfit = document.getElementById('roi-profit');
+
+            const expectedReturn = score * TICKET_MEDIO;
+            const netProfit = expectedReturn - CUSTO_LIGACAO;
+
+            roiReturn.innerText = `R$ ${expectedReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            roiProfit.innerText = `R$ ${netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            if (status) {
+                roiStatus.innerHTML = `<i class="fa-solid fa-circle-check" style="color: var(--accent-emerald);"></i> <span style="color: var(--accent-emerald);">ROI Positivo: Liberado p/ Comercial</span>`;
+                roiProfit.style.color = 'var(--accent-emerald)';
+            } else {
+                roiStatus.innerHTML = `<i class="fa-solid fa-circle-xmark" style="color: var(--text-muted);"></i> <span style="color: var(--text-muted);">ROI Negativo: Nutrição Automática</span>`;
+                roiProfit.style.color = 'var(--text-muted)';
+            }
+
+            const fillWidth = Math.min(100, (score / 0.1) * 100);
+            roiProgress.style.width = fillWidth + '%';
+            roiNode.style.left = fillWidth + '%';
+        }
+
+        // Inicializar os mini line charts para Conversion Rate, ROI, Growth
+        function initMiniCharts() {
+            const configHelper = (ctx, dataList, borderColor, gradientColorStart) => {
+                const gradient = ctx.createLinearGradient(0, 0, 0, 45);
+                gradient.addColorStop(0, gradientColorStart);
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                
+                return {
+                    type: 'line',
+                    data: {
+                        labels: ['1', '2', '3', '4', '5', '6'],
+                        datasets: [{
+                            data: dataList,
+                            borderColor: borderColor,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: true,
+                            backgroundColor: gradient,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                        scales: { x: { display: false }, y: { display: false } }
+                    }
+                };
+            };
+
+            // Mini Chart 1
+            const canvas1 = document.getElementById('chart-conversion-rate');
+            const ctx1 = canvas1.getContext('2d');
+            new Chart(ctx1, configHelper(ctx1, [12, 19, 15, 25, 22, 30], '#00e676', 'rgba(0, 230, 118, 0.25)'));
+
+            // Mini Chart 2
+            const canvas2 = document.getElementById('chart-high-roi');
+            const ctx2 = canvas2.getContext('2d');
+            new Chart(ctx2, configHelper(ctx2, [1.2, 1.5, 1.8, 1.4, 2.1, 1.9], '#7f00ff', 'rgba(127, 0, 255, 0.25)'));
+
+            // Mini Chart 3
+            const canvas3 = document.getElementById('chart-rev-growth-left');
+            const ctx3 = canvas3.getContext('2d');
+            new Chart(ctx3, configHelper(ctx3, [5, 10, 8, 15, 12, 15], '#00e676', 'rgba(0, 230, 118, 0.25)'));
+
+            // Mini Chart 4 (Right side growth)
+            const canvas4 = document.getElementById('chart-rev-growth-right');
+            const ctx4 = canvas4.getContext('2d');
+            new Chart(ctx4, configHelper(ctx4, [5, 8, 12, 10, 15, 15], '#00f2fe', 'rgba(0, 242, 254, 0.25)'));
+        }
+
+        // Gráfico de Tendências Principal (Conversion Trends)
+        function initTrendsChart() {
+            const ctx = document.getElementById('conversionTrendsChart').getContext('2d');
+            
+            const gradientPurple = ctx.createLinearGradient(0, 0, 0, 150);
+            gradientPurple.addColorStop(0, 'rgba(127, 0, 255, 0.4)');
+            gradientPurple.addColorStop(1, 'rgba(127, 0, 255, 0)');
+
+            const gradientCyan = ctx.createLinearGradient(0, 0, 0, 150);
+            gradientCyan.addColorStop(0, 'rgba(0, 242, 254, 0.4)');
+            gradientCyan.addColorStop(1, 'rgba(0, 242, 254, 0)');
+
+            new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Últimos 30 dias', 'Últimos 14 dias', 'Últimos 7 dias'],
-                    datasets: [{
-                        label: 'Volume de Interações',
-                        data: [m30, m14, m7],
-                        borderColor: '#4f46e5',
-                        backgroundColor: 'rgba(79, 70, 229, 0.05)',
-                        fill: true,
-                        tension: 0.3,
-                        borderWidth: 3
-                    }]
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [
+                        {
+                            label: 'Leads',
+                            data: [40, 130, 80, 230],
+                            borderColor: '#7f00ff',
+                            borderWidth: 3,
+                            backgroundColor: gradientPurple,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#7f00ff',
+                            pointBorderColor: '#ffffff'
+                        },
+                        {
+                            label: 'Conversions',
+                            data: [20, 80, 160, 210],
+                            borderColor: '#00f2fe',
+                            borderWidth: 3,
+                            backgroundColor: gradientCyan,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#00f2fe',
+                            pointBorderColor: '#ffffff'
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 250,
+                            ticks: { color: '#64748b', font: { size: 10 } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        x: {
+                            ticks: { color: '#64748b', font: { size: 10 } },
+                            grid: { display: false }
+                        }
+                    }
                 }
             });
+        }
+
+        // Histórico de simulações
+        function saveLeadToHistory(payload, result) {
+            const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const randomNum = Math.floor(Math.random() * 9000) + 1000;
+            const leadId = `LEAD-${randomNum}`;
+
+            const leadObj = {
+                id: leadId,
+                origem: payload.origem,
+                porte: payload.porte_empresa,
+                engajamento: `${payload.engajamento_7d} / ${payload.engajamento_14d} / ${payload.engajamento_30d}`,
+                diasFunil: payload.dias_no_funil,
+                score: result.score_probabilidade,
+                tier: result.tier,
+                roiStatus: result.ultrapassou_threshold_roi,
+                time: timestamp,
+                rawInputs: payload
+            };
+
+            leadsHistory.unshift(leadObj);
+            localStorage.setItem('lead_scoring_session_history', JSON.stringify(leadsHistory));
+            renderHistoryTable();
+        }
+
+        function renderHistoryTable() {
+            const tbody = document.getElementById('leads-table-body');
+            const emptyState = document.getElementById('table-empty-state');
+            const table = document.getElementById('leads-table');
+            
+            tbody.innerHTML = '';
+            
+            if (leadsHistory.length === 0) {
+                emptyState.style.display = 'block';
+                table.style.display = 'none';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            table.style.display = 'table';
+
+            leadsHistory.forEach(lead => {
+                const tr = document.createElement('tr');
+                let badgeClass = 'frio';
+                if (lead.tier === 'Crítico') badgeClass = 'critico';
+                else if (lead.tier === 'Quente') badgeClass = 'quente';
+                else if (lead.tier === 'Morno') badgeClass = 'morno';
+
+                const roiBadge = lead.roiStatus 
+                    ? `<span class="badge-row-tier" style="background-color: var(--roi-positivo-bg); color: var(--roi-positivo-text); border: 1px solid var(--roi-positivo-border)">✓ Sim</span>`
+                    : `<span class="badge-row-tier" style="background-color: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-color)">✕ Não</span>`;
+
+                tr.innerHTML = `
+                    <td><strong>${lead.id}</strong><div style="font-size: 10px; color: var(--text-muted);">${lead.time}</div></td>
+                    <td>${lead.origem}</td>
+                    <td>${lead.porte}</td>
+                    <td>${lead.engajamento}</td>
+                    <td>${lead.diasFunil} dias</td>
+                    <td><strong>${(lead.score * 100).toFixed(1)}%</strong></td>
+                    <td><span class="badge-row-tier ${badgeClass}">${lead.tier}</span></td>
+                    <td>${roiBadge}</td>
+                    <td class="action-buttons">
+                        <button onclick="loadLeadForm('${lead.id}')" class="btn-icon" title="Carregar no Formulador"><i class="fa-solid fa-cloud-arrow-down"></i></button>
+                        <button onclick="deleteLead('${lead.id}')" class="btn-icon delete" title="Apagar Registro"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function loadLeadForm(leadId) {
+            const lead = leadsHistory.find(l => l.id === leadId);
+            if (!lead) return;
+
+            document.getElementById('origem').value = lead.rawInputs.origem;
+            document.getElementById('porte_empresa').value = lead.rawInputs.porte_empresa;
+            
+            const sliders = ['dias_no_funil', 'engajamento_7d', 'engajamento_14d', 'engajamento_30d', 'total_eventos_historico'];
+            sliders.forEach(key => {
+                const el = document.getElementById(key);
+                el.value = lead.rawInputs[key];
+                document.getElementById('val-' + key).innerText = lead.rawInputs[key];
+            });
+
+            toggleDrawer(true);
+            showToast("Dados do lead carregados no simulador!");
+        }
+
+        function deleteLead(leadId) {
+            leadsHistory = leadsHistory.filter(l => l.id !== leadId);
+            localStorage.setItem('lead_scoring_session_history', JSON.stringify(leadsHistory));
+            renderHistoryTable();
+            showToast("Registro deletado com sucesso.");
+        }
+
+        function clearHistory() {
+            if (confirm("Tem certeza que deseja apagar todo o histórico de leads da sessão?")) {
+                leadsHistory = [];
+                localStorage.removeItem('lead_scoring_session_history');
+                renderHistoryTable();
+                showToast("Histórico limpo.");
+            }
+        }
+
+        function filterHistoryTable() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filterTier = document.getElementById('filter-tier').value;
+            const rows = document.querySelectorAll('#leads-table-body tr');
+            let visibleCount = 0;
+
+            rows.forEach((row, i) => {
+                const leadObj = leadsHistory[i];
+                if (!leadObj) return;
+
+                const textMatch = leadObj.id.toLowerCase().includes(query) || 
+                                  leadObj.origem.toLowerCase().includes(query) || 
+                                  leadObj.porte.toLowerCase().includes(query);
+                const tierMatch = filterTier === 'ALL' || leadObj.tier === filterTier;
+
+                if (textMatch && tierMatch) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const emptyState = document.getElementById('table-empty-state');
+            const table = document.getElementById('leads-table');
+
+            if (visibleCount === 0 && leadsHistory.length > 0) {
+                emptyState.style.display = 'block';
+                emptyState.innerHTML = `<i class="fa-solid fa-magnifying-glass-minus"></i><p>Nenhum lead corresponde à pesquisa.</p>`;
+            } else if (leadsHistory.length > 0) {
+                emptyState.style.display = 'none';
+                table.style.display = 'table';
+            }
+        }
+
+        function sortTable(colIndex) {
+            const keys = ['id', 'origem', 'porte', '', 'diasFunil', 'score', 'tier'];
+            const key = keys[colIndex];
+            if (!key) return;
+
+            sortDirection[key] = !sortDirection[key];
+            const direction = sortDirection[key] ? 1 : -1;
+
+            leadsHistory.sort((a, b) => {
+                let valA = a[key];
+                let valB = b[key];
+
+                if (typeof valA === 'string') {
+                    return valA.localeCompare(valB) * direction;
+                }
+                return (valA - valB) * direction;
+            });
+
+            renderHistoryTable();
+        }
+
+        function exportHistory(format) {
+            if (leadsHistory.length === 0) {
+                showToast("Não existem registros para exportar.", "error");
+                return;
+            }
+
+            let fileContent = '';
+            let mimeType = '';
+            let fileName = '';
+
+            if (format === 'json') {
+                fileContent = JSON.stringify(leadsHistory, null, 2);
+                mimeType = 'application/json';
+                fileName = `leads_score_sessao_${new Date().toISOString().slice(0,10)}.json`;
+            } else if (format === 'csv') {
+                const headers = ['ID', 'DataHora', 'Origem', 'Porte', 'Engajamento_7d_14d_30d', 'Dias_Funil', 'Score_Probabilidade', 'Tier', 'ROI_Positivo'];
+                const rows = leadsHistory.map(l => [
+                    l.id, l.time, l.origem, l.porte, l.engajamento, l.diasFunil, l.score, l.tier, l.roiStatus
+                ]);
+                fileContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+                mimeType = 'text/csv';
+                fileName = `leads_score_sessao_${new Date().toISOString().slice(0,10)}.csv`;
+            }
+
+            const blob = new Blob([fileContent], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`Dados exportados em formato ${format.toUpperCase()}!`);
         }
     </script>
 </body>
