@@ -56,13 +56,16 @@ End-to-end ML pipeline that scores B2B leads by conversion probability, served v
 ├── api_scoring.py               # FastAPI inference endpoint
 ├── pipeline_retreino.py         # Retraining pipeline
 ├── gerador_crm.py               # Synthetic CRM data generator
-├── modelo_lead_scoring.pkl      # Trained model artifact
-├── threshold_otimo.pkl          # Optimized classification threshold
-├── features_modelo.pkl          # Feature pipeline
 ├── dashboard_comercial.html     # Commercial dashboard
-├── Dockerfile
+├── docs/
+│   └── MANUAL_OPERACIONAL.md    # Full technical manual (Portuguese)
+├── DockerFile
 └── requirements.txt
 ```
+
+## Model Artifacts
+
+The trained model is **not versioned**. `modelo_lead_scoring.pkl`, `features_modelo.pkl` and `threshold_otimo.pkl` are build outputs, regenerated end-to-end from source — the CRM data is synthetic and seeded (`np.random.seed(42)`), so the pipeline is fully reproducible from a clean clone.
 
 ## How to Run
 
@@ -70,7 +73,14 @@ End-to-end ML pipeline that scores B2B leads by conversion probability, served v
 git clone https://github.com/guilhermehrsilva/lead-scoring-b2b-mlops.git
 cd lead-scoring-b2b-mlops
 pip install -r requirements.txt
-uvicorn api_scoring:app --reload
+```
+
+Then run the three steps in order — the API will not start until the artifacts exist:
+
+```bash
+python gerador_crm.py        # 1. generate synthetic CRM data
+python pipeline_retreino.py  # 2. train and emit the three .pkl artifacts
+uvicorn api_scoring:app --reload   # 3. serve
 ```
 
 ### With Docker
@@ -81,3 +91,7 @@ docker run -p 8000:8000 lead-scoring-b2b
 ```
 
 API docs available at `http://localhost:8000/docs`
+
+## License
+
+MIT — see [LICENSE](LICENSE).

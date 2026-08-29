@@ -23,6 +23,10 @@ __pycache__/
 *.sqlite
 *.db
 
+# Artefatos de modelo — regerados por pipeline_retreino.py
+*.pkl
+*.joblib
+
 # Variáveis de Ambiente e Segredos
 .env
 *.env

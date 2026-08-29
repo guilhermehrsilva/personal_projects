@@ -16,7 +16,7 @@ from lightgbm import LGBMClassifier
 warnings.filterwarnings('ignore', message='X does not have valid feature names')
 
 # Diretorios
-BASE_DIR = r"c:\Users\Guilherme Risson\.gemini\antigravity\scratch\personal_projects\16_05_2026"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SEED = 42
 
 # --- 1. Definir as Tarefas Individuais ---
