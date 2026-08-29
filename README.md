@@ -65,7 +65,7 @@ End-to-end ML pipeline that scores B2B leads by conversion probability, served v
 
 ## Model Artifacts
 
-The trained model is **not versioned**. `modelo_lead_scoring.pkl`, `features_modelo.pkl` and `threshold_otimo.pkl` are build outputs, regenerated end-to-end from source — the CRM data is synthetic and seeded (`np.random.seed(42)`), so the pipeline is fully reproducible from a clean clone.
+The trained model is **not versioned**. `modelo_lead_scoring.pkl`, `features_modelo.pkl` and `threshold_otimo.pkl` are build outputs, regenerated end-to-end from source. The CRM data is synthetic and seeded (`np.random.seed(42)`), so the pipeline is fully reproducible from a clean clone.
 
 ## How to Run
 
@@ -75,7 +75,7 @@ cd lead-scoring-b2b-mlops
 pip install -r requirements.txt
 ```
 
-Then run the three steps in order — the API will not start until the artifacts exist:
+Then run the three steps in order. The API will not start until the artifacts exist:
 
 ```bash
 python gerador_crm.py        # 1. generate synthetic CRM data
@@ -94,4 +94,4 @@ API docs available at `http://localhost:8000/docs`
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
