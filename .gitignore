@@ -1,20 +1,20 @@
-# Ambientes Virtuais (Virtual Environments)
+  Ambientes Virtuais (Virtual Environments)
 .venv/
 venv/
 env/
 
-# Configurações de IDE e Editor
+  Configurações de IDE e Editor
 .vscode/
 .idea/
 
-# Jupyter Notebook e Python
+  Jupyter Notebook e Python
 .ipynb_checkpoints/
 __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
 
-# Dados e Arquivos Sensíveis
+  Dados e Arquivos Sensíveis
 *.csv
 *.xlsx
 *.xls
@@ -23,16 +23,16 @@ __pycache__/
 *.sqlite
 *.db
 
-# Artefatos de modelo — regerados por pipeline_retreino.py
+  Artefatos de modelo — regerados por pipeline_retreino.py
 *.pkl
 *.joblib
 
-# Variáveis de Ambiente e Segredos
+  Variáveis de Ambiente e Segredos
 .env
 *.env
 secret*
 credentials*
 
-# Arquivos de Sistema Operacional
+  Arquivos de Sistema Operacional
 .DS_Store
 Thumbs.db
